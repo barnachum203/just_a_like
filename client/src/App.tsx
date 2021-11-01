@@ -7,8 +7,8 @@ import Auth from './users/components/Auth';
 function App() {
   return (
     <div>
-        <Project />
         <Switch/>
+        <Route exact path='/' component={Project}/>
         <Route exact path='/auth' component={Auth}/>
     </div> 
   );
