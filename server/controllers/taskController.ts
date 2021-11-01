@@ -1,6 +1,5 @@
 import { Response, Request } from "express";
 const catchAsync = require("../utillities/catchAsync");
-// const dbService = require("../startup/db");
 const Task = require("../models/task.model");
 
 /*************************************************************
@@ -15,6 +14,7 @@ const Task = require("../models/task.model");
  * can get all tasks
  * */
 module.exports.allTasks = catchAsync(async (req: Request, res: Response) => {
+  //Get all Tasks from Task collection
   const tasks = await Task.find();
   console.log(`[TASK-GET] - send ${tasks.length} tasks`);
   res.send(tasks);
@@ -26,21 +26,17 @@ module.exports.allTasks = catchAsync(async (req: Request, res: Response) => {
  * to create new task
  * */
 module.exports.createTask = catchAsync(async (req: Request, res: Response) => {
+  //TODO: Add permission control
+
   const newTask = req.body;
 
-  try {
-    // const result = await Task.create(newTask);
-    const result = await new Task({newTask});
+  //Create new task
+  const result = await new Task(newTask);
+  result.save();
 
-    console.log(result);
-    result.save();
-    console.log(`[TASK-CREATE]: added new task to DB`);
+  console.log(`[TASK-CREATE]: added new task to DB`);
 
-    res.send("Added new task: " + newTask);
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("Failed to add new task: " + newTask);
-  }
+  if (result) res.send("Added new task: " + newTask);
 });
 
 /**
@@ -54,6 +50,7 @@ module.exports.createTask = catchAsync(async (req: Request, res: Response) => {
 module.exports.deleteTask = catchAsync(async (req: Request, res: Response) => {
   //TODO: Add permission control
   const tid = req.params.tid;
+  //Delete task by task id
   const result = await Task.findByIdAndDelete(tid);
   console.log(`[TASK-REMOVE] - removed task_id: ${tid}`);
   console.log(result);
@@ -101,6 +98,7 @@ module.exports.getAssociatedTasks = catchAsync(
   async (req: Request, res: Response) => {
     //TODO: Add permission control
     const uid = req.params.uid;
+    //Find user id in Task collection and return every associated task.
     const result = await Task.find({ users: { $in: uid } });
     console.log(`[ASSOCIATE-TASK] found ${result.length} tasks for id: ${uid}`);
     res.send(result);
