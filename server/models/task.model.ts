@@ -11,6 +11,7 @@ const taskSchema = new Schema({
   description: {
     type: String,
     required: true,
+    default: "description",
   },
   status: {
     type: Number,
@@ -34,7 +35,8 @@ const taskSchema = new Schema({
   finishDate: {
     type: Date,
     required: true,
+    default: Date.now(),
   },
 });
 
-module.exports = model('Task', taskSchema);
+module.exports = model("Task", taskSchema);
