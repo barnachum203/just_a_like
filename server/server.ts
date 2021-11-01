@@ -15,7 +15,6 @@ const tasksRoutes = require('./routes/task');
 require("dotenv").config();
 require("./startup/db")();
 require("./startup/routes")(app);
-require("./startup/seed")();
 const seeds = require("./startup/seed");
 
 //Uncomment to seed db
