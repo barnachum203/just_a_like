@@ -27,8 +27,6 @@ async function query(filterBy = {}) {
     .then((res) => res.data);
 }
 
-
-
 function getById(teamId:string) {
   return axios
     .get(`http://localhost:3030/api/team/${teamId}`)
