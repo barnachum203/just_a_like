@@ -1,4 +1,5 @@
-const { model, Schema } = require('mongoose');
+import mongoose from "mongoose";
+const { model, Schema } = mongoose;
 
 const userSchema = new Schema({
     first_name: {
@@ -21,14 +22,15 @@ const userSchema = new Schema({
         type: String,
         required: true
     },
-    experties: {
+    experties: [{
+        type: Schema.Types.ObjectId,
+        ref: "Expertise",
+        required: false,
+      }],
+    interests: [{
         type: Array,
         required: true
-    },
-    interests: {
-        type: Array,
-        required: true
-    },
+    }],
     level: {
         type: String,
         default: '4',
@@ -36,4 +38,4 @@ const userSchema = new Schema({
     }
 });
 
-module.exports.User = model('User', userSchema);
+module.exports = model('User', userSchema);
