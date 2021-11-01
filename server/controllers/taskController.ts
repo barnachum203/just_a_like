@@ -1,6 +1,7 @@
 import { Response, Request } from "express";
 const catchAsync = require("../utillities/catchAsync");
-const dbService = require("../startup/db");
+// const dbService = require("../startup/db");
+const Task = require("../models/task.model");
 
 /*************************************************************
  ** All Routes taken from "requirments" doc. *****************
@@ -13,16 +14,10 @@ const dbService = require("../startup/db");
  * Any user from level 1-4
  * can get all tasks
  * */
-module.exports.index = catchAsync(async (req: Request, res: Response) => {
-  try {
-    const collection = await dbService.getCollection("Task");
-    const tasks = await collection.aggregate().toArray();
-    console.log(`[TASK-GET] - send ${tasks.length} tasks`);
-    // res.json("All tasks : " + tasks);
-    res.send(tasks);
-  } catch (error) {
-    console.log(error);
-  }
+module.exports.allTasks = catchAsync(async (req: Request, res: Response) => {
+  const tasks = await Task.find();
+  console.log(`[TASK-GET] - send ${tasks.length} tasks`);
+  res.send(tasks);
 });
 
 /**
@@ -32,18 +27,20 @@ module.exports.index = catchAsync(async (req: Request, res: Response) => {
  * */
 module.exports.createTask = catchAsync(async (req: Request, res: Response) => {
   const newTask = req.body;
-  const pid = req.params;
 
   try {
-    //TODO: Add permission control
-    const collection = await dbService.getCollection("Task");
-    await collection.insertOne(newTask);
-  } catch (error) {
-    console.log(error);
-  }
-  console.log(`[TASK-CREATE]: Created task for project ${pid}`);
+    // const result = await Task.create(newTask);
+    const result = await new Task({newTask});
 
-  res.send("Created task: " + newTask);
+    console.log(result);
+    result.save();
+    console.log(`[TASK-CREATE]: added new task to DB`);
+
+    res.send("Added new task: " + newTask);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Failed to add new task: " + newTask);
+  }
 });
 
 /**
@@ -55,19 +52,14 @@ module.exports.createTask = catchAsync(async (req: Request, res: Response) => {
  * tid - task id
  * */
 module.exports.deleteTask = catchAsync(async (req: Request, res: Response) => {
-  try {
-    //TODO: Add permission control
-    const tid = req.params.tid;
-    const ObjectID = require("mongodb").ObjectID;
-    const collection = await dbService.getCollection("Task");
-    const result = await collection.deleteOne(
-      { _id: ObjectID(tid) }
-    );
-    console.log(`[TASK-REMOVE] - removed task_id: ${tid}`);
-    res.send("task removed." + result);
-  } catch (error) {
-    console.log(error);
-  }});
+  //TODO: Add permission control
+  const tid = req.params.tid;
+  const result = await Task.findByIdAndDelete(tid);
+  console.log(`[TASK-REMOVE] - removed task_id: ${tid}`);
+  console.log(result);
+  if (result) res.send("Deleted task: " + tid);
+  res.status(500).send("Task not found: " + tid);
+});
 
 /**
  * Update tasks:
@@ -81,22 +73,16 @@ module.exports.deleteTask = catchAsync(async (req: Request, res: Response) => {
  * tid - task id
  * */
 module.exports.updateTask = catchAsync(async (req: Request, res: Response) => {
-  try {
-    //TODO: Add permission control
-    const tid = req.params.tid;
-    const ObjectID = require("mongodb").ObjectID;
-    const updatedTask = req.body;
-    const collection = await dbService.getCollection("Task");
-    const result = await collection.updateOne(
-      { _id: ObjectID(tid) },
-      { $set: updatedTask }
-    );
-    console.log(`[TASK-UPDATE] - update task_id: ${tid}, ${result.matchedCount} matched the query criteria`);
-    console.log(`[TASK-UPDATE] - ${result.modifiedCount} docs were updated`);
-    res.send("task updated.");
-  } catch (error) {
-    console.log(error);
-  }
+  //TODO: Add permission control
+  const tid = req.params.tid;
+  const updatedTask = req.body;
+  const filter = { _id: req.params.tid };
+  //Fins task by id and update entire object
+  const doc = await Task.findByIdAndUpdate(filter, updatedTask);
+  console.log(
+    `[TASK-UPDATE] - update task_id: ${tid}, ${JSON.stringify(updatedTask)} `
+  );
+  res.send(`Task updated: \n${JSON.stringify(updatedTask)}`);
 });
 
 /**
@@ -113,16 +99,10 @@ module.exports.updateTask = catchAsync(async (req: Request, res: Response) => {
  * */
 module.exports.getAssociatedTasks = catchAsync(
   async (req: Request, res: Response) => {
-    try {
-      //TODO: Add permission control
-      const uid = req.params.uid
-      const collection = await dbService.getCollection("Task");
-      const result = await collection.find(
-        {users: uid}, {$where: uid }).toArray();
-      console.log(`[TASK-ASSOCIATE] - send tasks for user_id: ${uid} , ${result.length} matched the query criteria`);
-      res.send(result);
-    } catch (error) {
-      console.log(error);
-    }
+    //TODO: Add permission control
+    const uid = req.params.uid;
+    const result = await Task.find({ users: { $in: uid } });
+    console.log(`[ASSOCIATE-TASK] found ${result.length} tasks for id: ${uid}`);
+    res.send(result);
   }
 );
